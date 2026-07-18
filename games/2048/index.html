@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2048</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🔟</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: var(--font-body); }
+  body { overflow: hidden; color: #fff; }
+
+  #app {
+    position: fixed; inset: 0; overflow: auto; user-select: none;
+    display: grid; place-items: center; align-content: safe center;
+    padding: 4.5rem 0 1rem; /* keep content clear of the fixed top bar */
+    background: radial-gradient(120% 120% at 50% 25%, #1a2140 0%, #0c0e1c 100%);
+  }
+
+  /* top overlay bar */
+  .bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem clamp(1rem, 4vw, 1.6rem); pointer-events: none;
+  }
+  .bar a { pointer-events: auto; text-decoration: none; color: #fff; }
+  .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; opacity: 0.95; }
+  .brand .logo { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, #8b7cff, #c04cff); font-size: 0.95rem; }
+  .bar .right { display: flex; gap: 0.5rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem; font: 500 0.85rem/1 var(--font-body);
+    padding: 0.5rem 0.8rem; border-radius: 10px; color: #fff;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px); transition: background .15s;
+  }
+  .chip:hover { background: rgba(255,255,255,0.22); }
+
+  /* center column */
+  .wrap { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; width: min(92vw, 460px); }
+
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.8rem; width: 100%; }
+  .head .titles { display: flex; flex-direction: column; gap: 0.25rem; }
+  .kicker { font: 600 0.68rem/1 var(--font-body); letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; }
+  .head h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; margin: 0; font-size: clamp(1.8rem, 6vw, 2.4rem); line-height: 1; }
+  .scores { display: flex; gap: 0.5rem; }
+  .score-box {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    min-width: 74px; padding: 0.45rem 0.7rem; border-radius: 12px;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+  }
+  .score-box .k { font: 600 0.6rem/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.65; }
+  .score-box .v { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.25rem; line-height: 1; }
+
+  /* board */
+  .board {
+    position: relative; width: 100%; aspect-ratio: 1 / 1;
+    display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr);
+    gap: clamp(6px, 2.2vw, 12px); padding: clamp(6px, 2.2vw, 12px);
+    border-radius: 16px; background: rgba(0,0,0,0.32); border: 1px solid rgba(255,255,255,0.1);
+    touch-action: none;
+  }
+  .cell { border-radius: 10px; background: rgba(255,255,255,0.045); position: relative; }
+  .tile {
+    position: absolute; inset: 0; border-radius: 10px;
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em; color: #fff;
+    font-size: clamp(1.3rem, 7vw, 2rem);
+    box-shadow: 0 4px 14px -6px rgba(0,0,0,0.6);
+    animation: spawn .12s cubic-bezier(.2,1.4,.4,1);
+  }
+  .tile.len3 { font-size: clamp(1.05rem, 5.6vw, 1.7rem); }
+  .tile.len4 { font-size: clamp(0.85rem, 4.6vw, 1.4rem); }
+  .tile.pop { animation: pop .14s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes spawn { from { transform: scale(0.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+  .note { font: 500 0.9rem/1.3 var(--font-body); opacity: 0; height: 1.1em; transition: opacity .25s; text-align: center; }
+  .note.show { opacity: 0.85; }
+  .note b { color: #e9a9ff; }
+
+  .controls { display: flex; gap: 0.6rem; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;
+    font: 600 0.9rem/1 var(--font-body); color: #fff;
+    padding: 0.6rem 1rem; border-radius: 10px;
+    background: linear-gradient(135deg, #8b7cff, #c04cff); border: none;
+    box-shadow: 0 10px 26px -12px rgba(139,124,255,0.9); transition: filter .15s, transform .15s;
+  }
+  .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .hint { font: 500 0.82rem/1 var(--font-body); opacity: 0.5; text-align: center; }
+
+  /* game-over overlay */
+  .over {
+    position: absolute; inset: 0; z-index: 4; display: none;
+    place-items: center; text-align: center; border-radius: 16px;
+    background: rgba(10,10,22,0.82); backdrop-filter: blur(4px); padding: 1.2rem;
+  }
+  .over.show { display: grid; }
+  .over .inner { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+  .over .ktitle { font: 600 0.72rem/1 var(--font-body); letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.65; }
+  .over h2 { font-family: var(--font-display); font-weight: 700; margin: 0.2rem 0; font-size: clamp(1.8rem, 8vw, 2.6rem); line-height: 1; }
+  .over .final { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(2.4rem, 12vw, 3.4rem); line-height: 1; letter-spacing: -0.03em; }
+  .over .final small { font-size: 0.32em; font-weight: 600; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.1em; margin-left: 0.35em; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.4rem 0;
+    font: 700 0.8rem/1 var(--font-display); letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 0.5rem 0.9rem; border-radius: 999px; color: #0c1a12;
+    background: linear-gradient(135deg, #7dffc4, #29d18f);
+    animation: bpop .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes bpop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="brand" href="../../"><span class="logo">🔟</span> 2048</a>
+  <div class="right">
+    <a class="chip" href="stats.html">📊 Stats</a>
+    <a class="chip" href="../../">← Arcade</a>
+  </div>
+</div>
+
+<div id="app">
+  <div class="wrap">
+    <div class="head">
+      <div class="titles">
+        <div class="kicker">Slide &amp; merge</div>
+        <h1>2048</h1>
+      </div>
+      <div class="scores">
+        <div class="score-box"><span class="k">Score</span><span class="v" id="score">0</span></div>
+        <div class="score-box"><span class="k">Best</span><span class="v" id="best">0</span></div>
+      </div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="over" id="over">
+        <div class="inner" id="overInner"></div>
+      </div>
+    </div>
+
+    <div class="note" id="note"></div>
+
+    <div class="controls">
+      <button class="btn" id="newgame">🔄 New Game</button>
+    </div>
+    <div class="hint">Arrow keys / WASD · swipe on touch</div>
+  </div>
+</div>
+
+<script type="module">
+  import { createStore } from "../../common/stats-store.js";
+
+  const store = createStore("2048", { lowerIsBetter: false, unit: "" });
+
+  const boardEl = document.getElementById("board");
+  const scoreEl = document.getElementById("score");
+  const bestEl = document.getElementById("best");
+  const noteEl = document.getElementById("note");
+  const overEl = document.getElementById("over");
+  const overInner = document.getElementById("overInner");
+  const newGameBtn = document.getElementById("newgame");
+
+  const SIZE = 4;
+  const RAMP = {
+    2: "#2a2c44", 4: "#34365c", 8: "#453f92", 16: "#5b49c9",
+    32: "#7059e6", 64: "#8b7cff", 128: "#9d6bff", 256: "#b15aff",
+    512: "#c04cff", 1024: "#d24ff0", 2048: "#e85fd6",
+  };
+  const superColor = "#ff6fbf";
+
+  let grid = [];               // 4x4 array of numbers, 0 = empty
+  let score = 0;
+  let best = store.best() || 0;
+  let gameOver = false;
+  let reached2048 = false;
+
+  bestEl.textContent = best;
+
+  // background cells (created once; tiles render into them)
+  const cells = [];
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const c = document.createElement("div");
+    c.className = "cell";
+    boardEl.appendChild(c);
+    cells.push(c);
+  }
+
+  const empties = () => {
+    const out = [];
+    for (let r = 0; r < SIZE; r++)
+      for (let c = 0; c < SIZE; c++)
+        if (grid[r][c] === 0) out.push([r, c]);
+    return out;
+  };
+
+  function spawnTile() {
+    const cellsEmpty = empties();
+    if (!cellsEmpty.length) return;
+    const [r, c] = cellsEmpty[Math.floor(Math.random() * cellsEmpty.length)];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+  }
+
+  function render(popSet) {
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const cell = cells[r * SIZE + c];
+        cell.innerHTML = "";
+        const v = grid[r][c];
+        if (!v) continue;
+        const tile = document.createElement("div");
+        const digits = String(v).length;
+        tile.className = "tile" + (digits === 3 ? " len3" : digits >= 4 ? " len4" : "")
+          + (popSet && popSet.has(r * SIZE + c) ? " pop" : "");
+        tile.style.background = RAMP[v] || superColor;
+        tile.textContent = v;
+        cell.appendChild(tile);
+      }
+    }
+    scoreEl.textContent = score;
+  }
+
+  // Slide + merge one line to the "front" (index 0). No tile merges twice.
+  function slideLine(line) {
+    const nums = line.filter((x) => x !== 0);
+    const out = [];
+    let gained = 0, merged = false;
+    for (let i = 0; i < nums.length; i++) {
+      if (i + 1 < nums.length && nums[i] === nums[i + 1]) {
+        const val = nums[i] * 2;
+        out.push(val);
+        gained += val;
+        merged = true;
+        i++; // skip the consumed partner so it can't merge again
+      } else {
+        out.push(nums[i]);
+      }
+    }
+    while (out.length < SIZE) out.push(0);
+    return { line: out, gained, merged };
+  }
+
+  // Extract a line from the grid in the direction of travel.
+  // dir: "left","right","up","down". Returns [coords...] ordered front->back.
+  function lineCoords(dir, i) {
+    const coords = [];
+    for (let j = 0; j < SIZE; j++) {
+      if (dir === "left") coords.push([i, j]);
+      else if (dir === "right") coords.push([i, SIZE - 1 - j]);
+      else if (dir === "up") coords.push([j, i]);
+      else coords.push([SIZE - 1 - j, i]); // down
+    }
+    return coords;
+  }
+
+  function move(dir) {
+    if (gameOver) return;
+    let changed = false;
+    const mergedCells = new Set();
+
+    for (let i = 0; i < SIZE; i++) {
+      const coords = lineCoords(dir, i);
+      const before = coords.map(([r, c]) => grid[r][c]);
+      const { line, gained, merged } = slideLine(before);
+      score += gained;
+      for (let j = 0; j < SIZE; j++) {
+        const [r, c] = coords[j];
+        if (grid[r][c] !== line[j]) changed = true;
+        grid[r][c] = line[j];
+      }
+      if (merged) {
+        // mark merged result cells (first occurrence where a doubled value sits) for pop
+        for (let j = 0; j < SIZE; j++) {
+          const [r, c] = coords[j];
+          if (line[j] !== 0 && line[j] !== before[j]) mergedCells.add(r * SIZE + c);
+        }
+      }
+    }
+
+    if (!changed) return;
+
+    if (!reached2048) {
+      for (let r = 0; r < SIZE; r++)
+        for (let c = 0; c < SIZE; c++)
+          if (grid[r][c] >= 2048) reached2048 = true;
+      if (reached2048) showNote("You made <b>2048</b>! Keep going for a higher score.");
+    }
+
+    spawnTile();
+    render(mergedCells);
+
+    if (isGameOver()) endGame();
+  }
+
+  function isGameOver() {
+    if (empties().length) return false;
+    for (let r = 0; r < SIZE; r++) {
+      for (let c = 0; c < SIZE; c++) {
+        const v = grid[r][c];
+        if (c + 1 < SIZE && grid[r][c + 1] === v) return false;
+        if (r + 1 < SIZE && grid[r + 1][c] === v) return false;
+      }
+    }
+    return true;
+  }
+
+  function endGame() {
+    gameOver = true;
+    const record = store.isRecord(score);
+    store.record(score, {});
+    if (record && score > best) best = score;
+    bestEl.textContent = best;
+    overInner.innerHTML = `
+      <div class="ktitle">No moves left</div>
+      <h2>Game over</h2>
+      <div class="final">${score}<small>score</small></div>
+      ${record ? `<div class="badge">🏆 New personal best</div>` : ""}
+      <button class="btn" id="tryagain">↻ Try again</button>`;
+    overEl.classList.add("show");
+    overInner.querySelector("#tryagain").addEventListener("click", newGame);
+  }
+
+  function showNote(html) {
+    noteEl.innerHTML = html;
+    noteEl.classList.add("show");
+  }
+
+  function newGame() {
+    grid = Array.from({ length: SIZE }, () => new Array(SIZE).fill(0));
+    score = 0;
+    gameOver = false;
+    reached2048 = false;
+    overEl.classList.remove("show");
+    noteEl.classList.remove("show");
+    noteEl.innerHTML = "";
+    bestEl.textContent = best;
+    spawnTile();
+    spawnTile();
+    render();
+  }
+
+  // ---- input --------------------------------------------------------------
+  const KEYS = {
+    ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down",
+    a: "left", d: "right", w: "up", s: "down",
+    A: "left", D: "right", W: "up", S: "down",
+  };
+  window.addEventListener("keydown", (e) => {
+    const dir = KEYS[e.key];
+    if (!dir) return;
+    e.preventDefault(); // stop arrow-key page scroll
+    move(dir);
+  });
+
+  // touch / pointer swipe
+  let sx = 0, sy = 0, tracking = false;
+  boardEl.addEventListener("pointerdown", (e) => {
+    if (gameOver) return;
+    tracking = true; sx = e.clientX; sy = e.clientY;
+  });
+  boardEl.addEventListener("pointerup", (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (Math.max(ax, ay) < 24) return; // ignore taps
+    if (ax > ay) move(dx > 0 ? "right" : "left");
+    else move(dy > 0 ? "down" : "up");
+  });
+
+  newGameBtn.addEventListener("click", newGame);
+
+  newGame();
+</script>
+</body>
+</html>

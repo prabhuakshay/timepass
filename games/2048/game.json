@@ -1,0 +1,9 @@
+{
+  "title": "2048",
+  "description": "Slide the tiles, merge matching numbers, and chase the elusive 2048 tile.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "🔟",
+  "tags": ["puzzle", "solo"],
+  "hidden": false
+}

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Memory</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🔢</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: var(--font-body); }
+  body { overflow: hidden; }
+
+  #pad {
+    position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
+    user-select: none; color: #fff;
+    transition: background 220ms ease;
+    background: radial-gradient(120% 120% at 50% 25%, #1a2140 0%, #0c0e1c 100%);
+  }
+  #pad.done { background: radial-gradient(120% 120% at 50% 25%, #6b4bff 0%, #2b1a63 100%); }
+
+  /* top overlay bar */
+  .bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem clamp(1rem, 4vw, 1.6rem); pointer-events: none;
+  }
+  .bar a { pointer-events: auto; text-decoration: none; color: #fff; }
+  .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; opacity: 0.95; }
+  .brand .logo { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, #8b7cff, #c04cff); font-size: 0.95rem; }
+  .bar .right { display: flex; gap: 0.5rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem; font: 500 0.85rem/1 var(--font-body);
+    padding: 0.5rem 0.8rem; border-radius: 10px; color: #fff;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px); transition: background .15s;
+  }
+  .chip:hover { background: rgba(255,255,255,0.22); }
+
+  .stage { padding: 1.5rem; max-width: 640px; width: 100%; }
+  .kicker { font: 600 0.72rem/1 var(--font-body); letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.7; }
+  h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; margin: 0.7rem 0 0.4rem; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; }
+  .num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(2.6rem, 13vw, 5.4rem); line-height: 1; letter-spacing: -0.02em; word-break: break-all; }
+  .num small { font-size: 0.28em; font-weight: 600; opacity: 0.75; margin-left: 0.15em; }
+  .msg { font-size: 1.05rem; opacity: 0.85; margin: 0.9rem 0 0; }
+
+  /* shrinking memorize bar */
+  .track { width: min(360px, 78vw); height: 8px; margin: 1.6rem auto 0; border-radius: 999px; background: rgba(255,255,255,0.14); overflow: hidden; }
+  .track .fill { height: 100%; width: 100%; border-radius: 999px; background: linear-gradient(135deg,#8b7cff,#c04cff); transform-origin: left center; }
+
+  /* answer input */
+  .answer {
+    display: flex; gap: 0.6rem; justify-content: center; align-items: stretch;
+    margin: 1.4rem auto 0; max-width: 420px; width: 100%;
+  }
+  .answer input {
+    flex: 1; min-width: 0; font-family: var(--font-display); font-weight: 700;
+    font-variant-numeric: tabular-nums; font-size: 1.7rem; text-align: center;
+    color: #fff; padding: 0.6rem 0.8rem; border-radius: 12px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.22);
+    outline: none; transition: border-color .15s, background .15s;
+  }
+  .answer input:focus { border-color: #c04cff; background: rgba(255,255,255,0.14); }
+  .btn {
+    font: 600 1rem/1 var(--font-body); color: #fff; cursor: pointer;
+    padding: 0 1.2rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.16);
+    background: linear-gradient(135deg,#8b7cff,#c04cff); transition: filter .15s, transform .05s;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: translateY(1px); }
+  .btn.again { margin-top: 1.2rem; padding: 0.7rem 1.4rem; }
+
+  .compare { display: flex; justify-content: center; gap: 1.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+  .compare div { display: flex; flex-direction: column; gap: 0.25rem; }
+  .compare .sk { font: 600 0.62rem/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
+  .compare .sv { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.4rem; word-break: break-all; }
+  .compare .miss { color: #ff9db0; }
+  .compare .ok { color: #7dffc4; }
+
+  .best { position: fixed; bottom: 1.3rem; left: 0; right: 0; text-align: center; font: 500 0.9rem/1 var(--font-body); opacity: 0.6; pointer-events: none; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1rem;
+    font: 700 0.8rem/1 var(--font-display); letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 0.5rem 0.9rem; border-radius: 999px; color: #0c1a12;
+    background: linear-gradient(135deg, #7dffc4, #29d18f);
+    animation: pop .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="brand" href="../../"><span class="logo">🔢</span> Number Memory</a>
+  <div class="right">
+    <a class="chip" href="stats.html">📊 Stats</a>
+    <a class="chip" href="../../">← Arcade</a>
+  </div>
+</div>
+
+<div id="pad">
+  <div class="stage" id="stage"></div>
+</div>
+<div class="best" id="best"></div>
+
+<script type="module">
+  import { createStore } from "../../common/stats-store.js";
+
+  const store = createStore("number-memory", { lowerIsBetter: false, unit: "" });
+  const pad = document.getElementById("pad");
+  const stage = document.getElementById("stage");
+  const bestEl = document.getElementById("best");
+
+  let state = "idle";     // idle | memorize | recall | done
+  let level = 1;
+  let current = "";       // the number to remember (string)
+  let timer = null;
+  let gameOverAt = 0;     // timestamp the game-over screen appeared
+  let best = store.best();
+
+  function renderBest() {
+    bestEl.textContent = best != null ? `Personal best · ${best} digit${best === 1 ? "" : "s"}` : "";
+  }
+  renderBest();
+
+  function randomNumber(digits) {
+    let s = String(1 + Math.floor(Math.random() * 9));   // first digit 1–9
+    for (let i = 1; i < digits; i++) s += Math.floor(Math.random() * 10);
+    return s;
+  }
+
+  function showIntro() {
+    state = "idle";
+    pad.className = "";
+    stage.innerHTML = `
+      <div class="kicker">Number Memory</div>
+      <h1>Remember the number</h1>
+      <p class="msg">A number flashes on screen — memorize it, then type it back. Each round adds one more digit. Press <b>Enter</b> or click Start.</p>
+      <button class="btn again" id="start">Start</button>`;
+    stage.querySelector("#start").addEventListener("click", startGame);
+  }
+
+  function startGame() {
+    level = 1;
+    memorize();
+  }
+
+  function memorize() {
+    state = "memorize";
+    pad.className = "";
+    current = randomNumber(level);
+    const viewMs = 1500 + level * 250;
+    stage.innerHTML = `
+      <div class="kicker">Level ${level} · ${level} digit${level === 1 ? "" : "s"}</div>
+      <div class="num">${current}</div>
+      <div class="track"><div class="fill" id="fill"></div></div>`;
+    const fill = stage.querySelector("#fill");
+    // shrink from full to empty over the memorize window
+    requestAnimationFrame(() => {
+      fill.style.transition = `transform ${viewMs}ms linear`;
+      fill.style.transform = "scaleX(0)";
+    });
+    clearTimeout(timer);
+    timer = setTimeout(recall, viewMs);
+  }
+
+  function recall() {
+    state = "recall";
+    pad.className = "";
+    stage.innerHTML = `
+      <div class="kicker">Level ${level}</div>
+      <h1>What was the number?</h1>
+      <div class="answer">
+        <input id="guess" type="text" inputmode="numeric" autocomplete="off"
+               autocapitalize="off" spellcheck="false" aria-label="Your answer">
+        <button class="btn" id="submit">Submit</button>
+      </div>
+      <p class="msg">Type the digits and press <b>Enter</b>.</p>`;
+    const input = stage.querySelector("#guess");
+    stage.querySelector("#submit").addEventListener("click", submit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); submit(); }
+    });
+    input.focus();
+  }
+
+  function submit() {
+    if (state !== "recall") return;
+    const input = stage.querySelector("#guess");
+    const guess = (input ? input.value : "").trim();
+    if (guess === current) {
+      correct();
+    } else {
+      gameOver(guess);
+    }
+  }
+
+  function correct() {
+    state = "between";
+    stage.innerHTML = `
+      <div class="kicker">Level ${level} cleared</div>
+      <h1>Correct ✓</h1>`;
+    level++;
+    clearTimeout(timer);
+    timer = setTimeout(memorize, 750);
+  }
+
+  function gameOver(guess) {
+    state = "done";
+    pad.className = "done";
+    gameOverAt = performance.now();
+    const score = level - 1;   // highest level fully passed
+    const record = store.isRecord(score);
+    store.record(score, {});
+    if (record) best = score;
+    renderBest();
+
+    stage.innerHTML = `
+      <div class="kicker">Game over</div>
+      <div class="num">${score}<small>digit${score === 1 ? "" : "s"}</small></div>
+      ${record ? `<div class="badge">🏆 New personal best</div>` : ""}
+      <div class="compare">
+        <div><span class="sk">Number was</span><span class="sv ok">${current}</span></div>
+        <div><span class="sk">You typed</span><span class="sv miss">${guess === "" ? "—" : escapeHtml(guess)}</span></div>
+      </div>
+      <div><button class="btn again" id="again">Play again</button></div>`;
+    stage.querySelector("#again").addEventListener("click", startGame);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // global Enter: start from intro / play again from game over
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    if (state === "idle") { e.preventDefault(); startGame(); return; }
+    // On game over, ignore the very Enter that submitted the losing guess so the
+    // player actually sees their score; a fresh Enter (after a short beat) restarts.
+    if (state === "done" && performance.now() - gameOverAt > 350) { e.preventDefault(); startGame(); }
+  });
+
+  showIntro();
+</script>
+</body>
+</html>

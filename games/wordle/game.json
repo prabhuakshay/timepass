@@ -1,0 +1,9 @@
+{
+  "title": "Word Guess",
+  "description": "Guess the hidden five-letter word in six tries. Green is right spot, yellow is wrong spot.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "🟩",
+  "tags": ["word", "solo"],
+  "hidden": false
+}

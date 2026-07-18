@@ -1,0 +1,9 @@
+{
+  "title": "Mental Math Sprint",
+  "description": "Solve as many arithmetic problems as you can in 60 seconds. Fast fingers, faster head.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "➗",
+  "tags": ["brain", "solo"],
+  "hidden": false
+}

@@ -1,5 +1,31 @@
 [
   {
+    "id": "fifteen",
+    "title": "15 Puzzle",
+    "description": "Slide the tiles into order, 1 through 15. Beat your best time.",
+    "author": "Timepass",
+    "icon": "🧩",
+    "tags": [
+      "puzzle",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/fifteen/"
+  },
+  {
+    "id": "2048",
+    "title": "2048",
+    "description": "Slide the tiles, merge matching numbers, and chase the elusive 2048 tile.",
+    "author": "Timepass",
+    "icon": "🔟",
+    "tags": [
+      "puzzle",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/2048/"
+  },
+  {
     "id": "aim",
     "title": "Aim Trainer",
     "description": "Pop 30 targets as fast as you can. Tracks your average time per target and accuracy.",
@@ -14,6 +40,32 @@
     "path": "games/aim/"
   },
   {
+    "id": "math-sprint",
+    "title": "Mental Math Sprint",
+    "description": "Solve as many arithmetic problems as you can in 60 seconds. Fast fingers, faster head.",
+    "author": "Timepass",
+    "icon": "➗",
+    "tags": [
+      "brain",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/math-sprint/"
+  },
+  {
+    "id": "number-memory",
+    "title": "Number Memory",
+    "description": "A number flashes for a moment — memorize it, then type it back. It gets one digit longer every round.",
+    "author": "Timepass",
+    "icon": "🔢",
+    "tags": [
+      "memory",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/number-memory/"
+  },
+  {
     "id": "reaction",
     "title": "Reaction Test",
     "description": "Wait for green, then tap as fast as you can. Tracks your reaction time and records.",
@@ -25,5 +77,31 @@
     ],
     "hidden": false,
     "path": "games/reaction/"
+  },
+  {
+    "id": "snake",
+    "title": "Snake",
+    "description": "Eat, grow, and don't bite your tail. The classic — one more run never hurts.",
+    "author": "Timepass",
+    "icon": "🐍",
+    "tags": [
+      "arcade",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/snake/"
+  },
+  {
+    "id": "wordle",
+    "title": "Word Guess",
+    "description": "Guess the hidden five-letter word in six tries. Green is right spot, yellow is wrong spot.",
+    "author": "Timepass",
+    "icon": "🟩",
+    "tags": [
+      "word",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/wordle/"
   }
 ]

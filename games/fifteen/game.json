@@ -1,0 +1,9 @@
+{
+  "title": "15 Puzzle",
+  "description": "Slide the tiles into order, 1 through 15. Beat your best time.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "🧩",
+  "tags": ["puzzle", "solo"],
+  "hidden": false
+}

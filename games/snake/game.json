@@ -1,0 +1,9 @@
+{
+  "title": "Snake",
+  "description": "Eat, grow, and don't bite your tail. The classic — one more run never hurts.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "🐍",
+  "tags": ["arcade", "solo"],
+  "hidden": false
+}

@@ -1,0 +1,9 @@
+{
+  "title": "Number Memory",
+  "description": "A number flashes for a moment — memorize it, then type it back. It gets one digit longer every round.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "🔢",
+  "tags": ["memory", "solo"],
+  "hidden": false
+}

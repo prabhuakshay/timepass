@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mental Math Sprint</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>➗</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: var(--font-body); }
+  body { overflow: hidden; }
+
+  #arena {
+    position: fixed; inset: 0; overflow: hidden;
+    user-select: none; color: #fff;
+    transition: background 220ms ease;
+    background: radial-gradient(120% 120% at 50% 25%, #1a2140 0%, #0c0e1c 100%);
+  }
+  #arena.done { background: radial-gradient(120% 120% at 50% 25%, #6b4bff 0%, #2b1a63 100%); }
+
+  /* top overlay bar */
+  .bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem clamp(1rem, 4vw, 1.6rem); pointer-events: none;
+  }
+  .bar a { pointer-events: auto; text-decoration: none; color: #fff; }
+  .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; opacity: 0.95; }
+  .brand .logo { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, #8b7cff, #c04cff); font-size: 0.95rem; }
+  .bar .right { display: flex; gap: 0.5rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem; font: 500 0.85rem/1 var(--font-body);
+    padding: 0.5rem 0.8rem; border-radius: 10px; color: #fff;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px); transition: background .15s;
+  }
+  .chip:hover { background: rgba(255,255,255,0.22); }
+
+  /* live HUD */
+  .hud {
+    position: fixed; top: 4.6rem; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: center; gap: 0.6rem;
+    pointer-events: none; opacity: 0; transition: opacity .2s;
+  }
+  .hud.show { opacity: 1; }
+  .stat {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    min-width: 84px; padding: 0.5rem 0.9rem; border-radius: 12px;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+  }
+  .stat .k { font: 600 0.62rem/1 var(--font-body); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.65; }
+  .stat .v { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.25rem; line-height: 1; }
+  .stat.low .v { color: #ff8a8a; }
+
+  /* play view: problem + answer input */
+  .play {
+    position: absolute; inset: 0; z-index: 4; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 1.5rem;
+  }
+  .play.show { display: flex; }
+  .problem {
+    font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: clamp(3rem, 15vw, 6rem); line-height: 1; letter-spacing: -0.02em;
+    transform: translateY(-24px);
+    background: linear-gradient(135deg, #b7aaff, #c04cff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .answer {
+    margin-top: clamp(1.4rem, 4vh, 2.4rem);
+    width: min(280px, 72vw);
+    font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: clamp(1.8rem, 6vw, 2.6rem); text-align: center; color: #fff;
+    padding: 0.6rem 0.9rem; border-radius: 14px;
+    background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.22);
+    outline: none; transition: border-color .15s, box-shadow .15s;
+    transform: translateY(-24px);
+  }
+  .answer:focus { border-color: #8b7cff; box-shadow: 0 0 0 4px rgba(139,124,255,0.25); }
+  .answer.shake { animation: shake .34s cubic-bezier(.36,.07,.19,.97); border-color: #ff6b6b; }
+  @keyframes shake {
+    10%, 90% { transform: translate(-1px, -24px); }
+    20%, 80% { transform: translate(3px, -24px); }
+    30%, 50%, 70% { transform: translate(-7px, -24px); }
+    40%, 60% { transform: translate(7px, -24px); }
+  }
+  .hint { margin-top: 1.4rem; transform: translateY(-24px); font-size: 0.92rem; opacity: 0.6; }
+
+  /* centered messaging (start / done) */
+  .stage {
+    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; text-align: center;
+    padding: 1.5rem; pointer-events: none;
+  }
+  .stage .inner { max-width: 640px; transform: translateY(-42px); }
+  .kicker { font: 600 0.72rem/1 var(--font-body); letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.7; }
+  h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; margin: 0.7rem 0 0.4rem; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; }
+  .num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(3rem, 13vw, 5.4rem); line-height: 1; letter-spacing: -0.03em; }
+  .num small { font-size: 0.28em; font-weight: 600; opacity: 0.75; margin-left: 0.15em; }
+  .msg { font-size: 1.05rem; opacity: 0.85; margin: 0.9rem 0 0; }
+  .sub-stats { display: flex; justify-content: center; gap: 1.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+  .sub-stats div { display: flex; flex-direction: column; gap: 0.2rem; }
+  .sub-stats .sk { font: 600 0.62rem/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
+  .sub-stats .sv { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; }
+  .best { position: fixed; bottom: 1.3rem; left: 0; right: 0; text-align: center; font: 500 0.9rem/1 var(--font-body); opacity: 0.6; pointer-events: none; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1rem;
+    font: 700 0.8rem/1 var(--font-display); letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 0.5rem 0.9rem; border-radius: 999px; color: #0c1a12;
+    background: linear-gradient(135deg, #7dffc4, #29d18f);
+    animation: pop .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="brand" href="../../"><span class="logo">➗</span> Math Sprint</a>
+  <div class="right">
+    <a class="chip" href="stats.html">📊 Stats</a>
+    <a class="chip" href="../../">← Arcade</a>
+  </div>
+</div>
+
+<div id="arena">
+  <div class="hud" id="hud">
+    <div class="stat" id="timeStat"><span class="k">Time</span><span class="v" id="hudTime">60</span></div>
+    <div class="stat"><span class="k">Score</span><span class="v" id="hudScore">0</span></div>
+  </div>
+
+  <div class="play" id="play">
+    <div class="problem" id="problem"></div>
+    <input class="answer" id="answer" type="text" inputmode="numeric" autocomplete="off"
+           spellcheck="false" aria-label="Your answer">
+    <div class="hint">Type the answer · Enter to submit</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="inner">
+      <div class="kicker">Mental Math Sprint</div>
+      <h1>60 seconds. How many?</h1>
+      <p class="msg">Solve +, −, × and ÷ as fast as your head allows. Press Enter or click to start.</p>
+    </div>
+  </div>
+</div>
+<div class="best" id="best"></div>
+
+<script type="module">
+  import { createStore } from "../../common/stats-store.js";
+
+  const DURATION = 60000; // 60s round
+  const store = createStore("math-sprint", { lowerIsBetter: false, unit: "" });
+
+  const arena = document.getElementById("arena");
+  const stage = document.getElementById("stage");
+  const play = document.getElementById("play");
+  const hud = document.getElementById("hud");
+  const timeStat = document.getElementById("timeStat");
+  const hudTime = document.getElementById("hudTime");
+  const hudScore = document.getElementById("hudScore");
+  const problemEl = document.getElementById("problem");
+  const answerEl = document.getElementById("answer");
+  const bestEl = document.getElementById("best");
+
+  let state = "idle";      // idle | playing | done
+  let score = 0;           // problems solved (correct)
+  let attempts = 0;        // total submissions (correct + wrong)
+  let answer = 0;          // current correct answer
+  let startTime = 0, rafId = null;
+  let best = store.best();
+
+  function renderBest() {
+    bestEl.textContent = best != null ? `Personal best · ${best} solved` : "";
+  }
+  renderBest();
+
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  function nextProblem() {
+    const ops = ["+", "-", "*", "/"];
+    const op = ops[rand(0, ops.length - 1)];
+    let a, b, text;
+    if (op === "+") {
+      a = rand(1, 99); b = rand(1, 99);
+      answer = a + b; text = `${a} + ${b}`;
+    } else if (op === "-") {
+      a = rand(1, 99); b = rand(1, 99);
+      if (b > a) [a, b] = [b, a];  // never negative
+      answer = a - b; text = `${a} − ${b}`;
+    } else if (op === "*") {
+      a = rand(2, 12); b = rand(2, 12);
+      answer = a * b; text = `${a} × ${b}`;
+    } else {
+      a = rand(2, 12); b = rand(2, 12);
+      const product = a * b;        // divide the product by a -> b (clean integer)
+      answer = b; text = `${product} ÷ ${a}`;
+    }
+    problemEl.textContent = text;
+    answerEl.value = "";
+    answerEl.focus();
+  }
+
+  function updateHud() {
+    hudScore.textContent = score;
+  }
+
+  function tick() {
+    const remaining = DURATION - (performance.now() - startTime);
+    if (remaining <= 0) { hudTime.textContent = "0"; finish(); return; }
+    const secs = Math.ceil(remaining / 1000);
+    hudTime.textContent = secs;
+    timeStat.classList.toggle("low", secs <= 10);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function begin() {
+    state = "playing";
+    arena.className = "";
+    score = 0; attempts = 0;
+    updateHud();
+    hudTime.textContent = "60";
+    timeStat.classList.remove("low");
+    stage.style.display = "none";
+    play.classList.add("show");
+    hud.classList.add("show");
+    startTime = performance.now();
+    nextProblem();
+    tick();
+  }
+
+  function correct() {
+    score++; attempts++;
+    updateHud();
+    nextProblem();
+  }
+
+  function wrong() {
+    attempts++;
+    answerEl.classList.remove("shake");
+    void answerEl.offsetWidth; // restart animation
+    answerEl.classList.add("shake");
+    answerEl.value = "";
+  }
+
+  function submit() {
+    const raw = answerEl.value.trim();
+    if (raw === "" || !/^-?\d+$/.test(raw)) { wrong(); return; }
+    if (Number(raw) === answer) correct();
+    else wrong();
+  }
+
+  function finish() {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+    state = "done";
+    arena.className = "done";
+    play.classList.remove("show");
+    hud.classList.remove("show");
+    answerEl.blur();
+
+    const acc = attempts ? Math.round((score / attempts) * 100) : 100;
+    const record = store.isRecord(score);
+    store.record(score, { acc });
+    if (record) best = score;
+    renderBest();
+
+    stage.style.display = "grid";
+    stage.innerHTML = `
+      <div class="inner">
+        <div class="kicker">Problems solved</div>
+        <div class="num">${score}</div>
+        ${record ? `<div class="badge">🏆 New personal best</div>` : ""}
+        <div class="sub-stats">
+          <div><span class="sk">Accuracy</span><span class="sv">${acc}%</span></div>
+          <div><span class="sk">Attempts</span><span class="sv">${attempts}</span></div>
+        </div>
+        <p class="msg">Press Enter or click to play again.</p>
+      </div>`;
+  }
+
+  // typing: auto-accept the instant the typed number matches the answer
+  answerEl.addEventListener("input", () => {
+    if (state !== "playing") return;
+    const raw = answerEl.value.trim();
+    if (/^-?\d+$/.test(raw) && Number(raw) === answer) correct();
+  });
+
+  answerEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); if (state === "playing") submit(); }
+  });
+
+  // keep focus on the input while playing (mobile/tap-away safety)
+  answerEl.addEventListener("blur", () => {
+    if (state === "playing") setTimeout(() => answerEl.focus(), 0);
+  });
+
+  // start / restart from idle or results
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (state === "idle" || state === "done")) { e.preventDefault(); begin(); }
+  });
+  arena.addEventListener("pointerdown", (e) => {
+    if (state === "idle" || state === "done") { e.preventDefault(); begin(); }
+  });
+</script>
+</body>
+</html>
