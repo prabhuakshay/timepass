@@ -19,7 +19,7 @@ timepass/
 ├── games/
 │   ├── _template/      # copy this to start a new game (ignored by the build)
 │   └── reaction/       # example game — a working reference (game + stats page)
-└── .github/workflows/deploy.yml   # auto-deploys to GitHub Pages on push to main
+└── .github/workflows/deploy.yml   # deploys to GitHub Pages on version-tag push
 ```
 
 Because GitHub Pages can't run code, `build.js` bakes the list of games into
@@ -119,9 +119,17 @@ No dependencies to install — it's all pure Node built-ins.
 
 ## Deploying
 
-Push to `main`. The GitHub Actions workflow runs `build.js` and publishes the
-whole folder to GitHub Pages. Enable it once under **Settings → Pages → Source:
-GitHub Actions**.
+Push a **version tag** and the GitHub Actions workflow runs `build.js` and
+publishes the whole folder to GitHub Pages:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Any tag matching `v*` triggers a release (you can also run it by hand from the
+Actions tab — it has a `workflow_dispatch` trigger). Enable Pages once under
+**Settings → Pages → Source: GitHub Actions**.
 
 > Note: keep game asset links **relative** (`./sprite.png`, `../../` for the arcade)
 > so they work under the project subpath (`https://<user>.github.io/timepass/`).
