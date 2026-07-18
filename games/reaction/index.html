@@ -17,19 +17,25 @@
   h1 { font-size: 1.8rem; margin: 0 0 0.5rem; }
   p  { margin: 0.25rem; opacity: 0.9; }
   .big { font-size: 3rem; font-weight: 700; }
-  a { color: #cbb6ff; position: fixed; top: 12px; left: 14px; font-size: 0.9rem; }
+  .links { position: fixed; top: 12px; left: 14px; font-size: 0.9rem; display: flex; gap: 1rem; }
+  .links a { color: #cbb6ff; }
 </style>
 </head>
 <body>
-<a href="../../">← Arcade</a>
+<nav class="links">
+  <a href="../../">← Arcade</a>
+  <a href="stats.html">📊 Stats</a>
+</nav>
 <div id="pad" class="idle">
   <div>
     <h1 id="title">Reaction Test</h1>
-    <p id="msg">Click / tap to start</p>
+    <p id="msg">Click, tap, or press space to start</p>
   </div>
 </div>
 
-<script>
+<script type="module">
+  import { recordAttempt, loadAttempts } from "./store.js";
+
   const pad = document.getElementById("pad");
   const title = document.getElementById("title");
   const msg = document.getElementById("msg");
@@ -37,7 +43,9 @@
   let state = "idle";   // idle | waiting | ready | result
   let timer = null;
   let startTime = 0;
-  let best = null;
+  // Seed the best from past sessions so records persist across reloads.
+  const past = loadAttempts();
+  let best = past.length ? Math.min(...past.map((a) => a.ms)) : null;
 
   function setState(next, cls) {
     state = next;
@@ -57,27 +65,39 @@
   }
 
   function showResult(ms) {
-    if (best === null || ms < best) best = ms;
+    const isRecord = best === null || ms < best;
+    if (isRecord) best = ms;
+    recordAttempt(ms);
     setState("result", "result");
     title.innerHTML = `<span class="big">${Math.round(ms)} ms</span>`;
-    msg.textContent = `Best: ${Math.round(best)} ms · click to go again`;
+    msg.textContent = isRecord && past.length
+      ? `🏆 New best! · click or space to go again`
+      : `Best: ${Math.round(best)} ms · click or space to go again`;
   }
 
-  pad.addEventListener("pointerdown", () => {
+  function trigger() {
     switch (state) {
       case "idle":
       case "result":
         schedule();
         break;
-      case "waiting":            // clicked too early
+      case "waiting":            // acted too early
         clearTimeout(timer);
         setState("result", "result");
         title.textContent = "Too soon! 🙈";
-        msg.textContent = "Click to try again";
+        msg.textContent = "Click or press space to try again";
         break;
       case "ready":
         showResult(performance.now() - startTime);
         break;
+    }
+  }
+
+  pad.addEventListener("pointerdown", trigger);
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();        // stop the page from scrolling
+      if (!e.repeat) trigger();  // ignore auto-repeat from a held key
     }
   });
 </script>
