@@ -3,6 +3,7 @@
   "description": "One-line pitch shown on the home page card.",
   "entry": "index.html",
   "author": "Your name",
+  "icon": "🎮",
   "tags": ["puzzle"],
   "hidden": false
 }

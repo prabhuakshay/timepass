@@ -3,40 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Timepass — Games</title>
-<meta name="description" content="A little arcade of browser games.">
+<title>Timepass — Browser Games</title>
+<meta name="description" content="A little arcade of browser games. Quick to play, easy to lose track of time.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🎮</text></svg>">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="common/ui.css">
 </head>
 <body>
-<header class="site-header">
-  <h1>🎮 Timepass</h1>
-  <p class="tagline">A little arcade of browser games.</p>
-</header>
+<div class="topbar">
+  <a class="brand" href="./"><span class="logo">🎮</span> Timepass</a>
+  <nav class="topnav">
+    <a class="btn" href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+</div>
 
-<main>
+<main class="container">
+  <header class="hero">
+    <div class="eyebrow"><span class="dot"></span> <span id="eyebrow-count">the arcade</span></div>
+    <h1>A little arcade of<br><span class="grad">browser games.</span></h1>
+    <p>Quick to pick up, easy to lose an afternoon to. Everything runs right here — no installs, no sign-ups.</p>
+  </header>
+
   <section id="grid" class="grid" aria-live="polite">
-    <p class="status">Loading games…</p>
+    <p class="empty" style="grid-column:1/-1">Loading games…</p>
   </section>
 </main>
 
-<footer class="site-footer">
-  <p id="count"></p>
-</footer>
+<p class="footer" id="footer"></p>
 
-<script>
-  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  }[c]));
+<script type="module">
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   function card(g) {
-    const tags = g.tags && g.tags.length
+    const tags = (g.tags || []).length
       ? `<div class="tags">${g.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>`
-      : "";
-    const author = g.author ? `<p class="author">by ${esc(g.author)}</p>` : "";
-    const desc = g.description ? `<p class="desc">${esc(g.description)}</p>` : "";
+      : "<span></span>";
     return `<a class="card" href="${esc(g.path)}">
-      <h2>${esc(g.title)}</h2>${desc}${tags}${author}
+      <div class="thumb">${esc(g.icon || "🎮")}</div>
+      <h2>${esc(g.title)}</h2>
+      <p class="desc">${esc(g.description || "")}</p>
+      <div class="foot">
+        ${tags}
+        <span class="play">Play →</span>
+      </div>
     </a>`;
   }
 
@@ -46,16 +55,18 @@
       const visible = games.filter((g) => !g.hidden);
       const grid = document.getElementById("grid");
       if (!visible.length) {
-        grid.innerHTML = `<p class="status">No games yet. Add a folder to <code>games/</code> and run <code>npm run build</code>.</p>`;
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+          <span class="big">🕹️</span>No games yet. Drop a folder into <code>games/</code> and run <code>npm run build</code>.</div>`;
         return;
       }
       grid.innerHTML = visible.map(card).join("");
-      document.getElementById("count").textContent =
-        `${visible.length} game${visible.length === 1 ? "" : "s"} loaded.`;
+      document.getElementById("eyebrow-count").textContent =
+        `${visible.length} game${visible.length === 1 ? "" : "s"} to play`;
+      document.getElementById("footer").textContent = "Made for wasting time, beautifully.";
     })
     .catch((err) => {
       document.getElementById("grid").innerHTML =
-        `<p class="status">Couldn't load the catalog (${esc(err.message)}). Run <code>npm run build</code>.</p>`;
+        `<div class="empty" style="grid-column:1/-1">Couldn't load the catalog (${esc(err.message)}). Run <code>npm run build</code>.</div>`;
     });
 </script>
 </body>

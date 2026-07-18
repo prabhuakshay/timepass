@@ -1,8 +1,9 @@
 {
   "title": "Reaction Test",
-  "description": "Wait for green, then tap as fast as you can. Measures your reaction time.",
+  "description": "Wait for green, then tap as fast as you can. Tracks your reaction time and records.",
   "entry": "index.html",
   "author": "Timepass",
+  "icon": "⚡",
   "tags": ["arcade", "solo"],
   "hidden": false
 }

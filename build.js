@@ -10,6 +10,7 @@
 //   "description": "One line pitch",          // shown on the home page card
 //   "entry":       "index.html",              // page opened at games/<id>/
 //   "author":      "Someone",
+//   "icon":        "🎮",                        // emoji shown on the home card
 //   "tags":        ["puzzle", "arcade"],
 //   "hidden":      false                       // if true, omitted from the list
 // }
@@ -57,6 +58,7 @@ function loadGames() {
       title: manifest.title || name,
       description: manifest.description || "",
       author: manifest.author || "",
+      icon: manifest.icon || "🎮",
       tags: Array.isArray(manifest.tags) ? manifest.tags : [],
       hidden: manifest.hidden === true,
       path: `games/${name}/${entry === "index.html" ? "" : entry}`,
