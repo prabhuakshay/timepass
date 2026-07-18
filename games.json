@@ -1,0 +1,14 @@
+[
+  {
+    "id": "reaction",
+    "title": "Reaction Test",
+    "description": "Wait for green, then tap as fast as you can. Measures your reaction time.",
+    "author": "Timepass",
+    "tags": [
+      "arcade",
+      "solo"
+    ],
+    "hidden": false,
+    "path": "games/reaction/"
+  }
+]

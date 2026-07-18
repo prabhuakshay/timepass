@@ -1,0 +1,14 @@
+{
+  "name": "timepass",
+  "version": "0.1.0",
+  "description": "A static website that hosts a collection of HTML/JS games. Drop a folder in games/, run build, deploy to GitHub Pages.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js && node preview.js",
+    "preview": "node preview.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

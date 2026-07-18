@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reaction Test</title>
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  #pad {
+    height: 100vh; display: grid; place-items: center; text-align: center;
+    cursor: pointer; user-select: none; color: #fff; transition: background 0.05s;
+  }
+  .wait  { background: #b03535; }
+  .ready { background: #2e8b57; }
+  .idle  { background: #23324a; }
+  .result{ background: #4a3f7a; }
+  h1 { font-size: 1.8rem; margin: 0 0 0.5rem; }
+  p  { margin: 0.25rem; opacity: 0.9; }
+  .big { font-size: 3rem; font-weight: 700; }
+  a { color: #cbb6ff; position: fixed; top: 12px; left: 14px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<a href="../../">← Arcade</a>
+<div id="pad" class="idle">
+  <div>
+    <h1 id="title">Reaction Test</h1>
+    <p id="msg">Click / tap to start</p>
+  </div>
+</div>
+
+<script>
+  const pad = document.getElementById("pad");
+  const title = document.getElementById("title");
+  const msg = document.getElementById("msg");
+
+  let state = "idle";   // idle | waiting | ready | result
+  let timer = null;
+  let startTime = 0;
+  let best = null;
+
+  function setState(next, cls) {
+    state = next;
+    pad.className = cls;
+  }
+
+  function schedule() {
+    setState("waiting", "wait");
+    title.textContent = "Wait for green…";
+    msg.textContent = "";
+    const delay = 1000 + Math.random() * 3000;
+    timer = setTimeout(() => {
+      startTime = performance.now();
+      setState("ready", "ready");
+      title.textContent = "TAP!";
+    }, delay);
+  }
+
+  function showResult(ms) {
+    if (best === null || ms < best) best = ms;
+    setState("result", "result");
+    title.innerHTML = `<span class="big">${Math.round(ms)} ms</span>`;
+    msg.textContent = `Best: ${Math.round(best)} ms · click to go again`;
+  }
+
+  pad.addEventListener("pointerdown", () => {
+    switch (state) {
+      case "idle":
+      case "result":
+        schedule();
+        break;
+      case "waiting":            // clicked too early
+        clearTimeout(timer);
+        setState("result", "result");
+        title.textContent = "Too soon! 🙈";
+        msg.textContent = "Click to try again";
+        break;
+      case "ready":
+        showResult(performance.now() - startTime);
+        break;
+    }
+  });
+</script>
+</body>
+</html>

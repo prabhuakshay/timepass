@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timepass — Games</title>
+<meta name="description" content="A little arcade of browser games.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🎮</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <h1>🎮 Timepass</h1>
+  <p class="tagline">A little arcade of browser games.</p>
+</header>
+
+<main>
+  <section id="grid" class="grid" aria-live="polite">
+    <p class="status">Loading games…</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p id="count"></p>
+</footer>
+
+<script>
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+
+  function card(g) {
+    const tags = g.tags && g.tags.length
+      ? `<div class="tags">${g.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>`
+      : "";
+    const author = g.author ? `<p class="author">by ${esc(g.author)}</p>` : "";
+    const desc = g.description ? `<p class="desc">${esc(g.description)}</p>` : "";
+    return `<a class="card" href="${esc(g.path)}">
+      <h2>${esc(g.title)}</h2>${desc}${tags}${author}
+    </a>`;
+  }
+
+  fetch("games.json")
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then((games) => {
+      const visible = games.filter((g) => !g.hidden);
+      const grid = document.getElementById("grid");
+      if (!visible.length) {
+        grid.innerHTML = `<p class="status">No games yet. Add a folder to <code>games/</code> and run <code>npm run build</code>.</p>`;
+        return;
+      }
+      grid.innerHTML = visible.map(card).join("");
+      document.getElementById("count").textContent =
+        `${visible.length} game${visible.length === 1 ? "" : "s"} loaded.`;
+    })
+    .catch((err) => {
+      document.getElementById("grid").innerHTML =
+        `<p class="status">Couldn't load the catalog (${esc(err.message)}). Run <code>npm run build</code>.</p>`;
+    });
+</script>
+</body>
+</html>
