@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aim Trainer</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🎯</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: var(--font-body); }
+  body { overflow: hidden; }
+
+  #arena {
+    position: fixed; inset: 0; overflow: hidden;
+    cursor: crosshair; user-select: none; color: #fff;
+    transition: background 220ms ease;
+    background: radial-gradient(120% 120% at 50% 25%, #1a2140 0%, #0c0e1c 100%);
+  }
+  #arena.playing { cursor: crosshair; }
+  #arena.done { background: radial-gradient(120% 120% at 50% 25%, #6b4bff 0%, #2b1a63 100%); }
+
+  /* top overlay bar */
+  .bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 6;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem clamp(1rem, 4vw, 1.6rem); pointer-events: none;
+  }
+  .bar a { pointer-events: auto; text-decoration: none; color: #fff; }
+  .brand { display: inline-flex; align-items: center; gap: 0.5rem; font-family: var(--font-display); font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; opacity: 0.95; }
+  .brand .logo { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: linear-gradient(135deg, #8b7cff, #c04cff); font-size: 0.95rem; }
+  .bar .right { display: flex; gap: 0.5rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem; font: 500 0.85rem/1 var(--font-body);
+    padding: 0.5rem 0.8rem; border-radius: 10px; color: #fff;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(8px); transition: background .15s;
+  }
+  .chip:hover { background: rgba(255,255,255,0.22); }
+
+  /* live HUD */
+  .hud {
+    position: fixed; top: 4.6rem; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: center; gap: 0.6rem;
+    pointer-events: none; opacity: 0; transition: opacity .2s;
+  }
+  .hud.show { opacity: 1; }
+  .stat {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    min-width: 84px; padding: 0.5rem 0.9rem; border-radius: 12px;
+    background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+  }
+  .stat .k { font: 600 0.62rem/1 var(--font-body); letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.65; }
+  .stat .v { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1.25rem; line-height: 1; }
+
+  /* the target */
+  .target {
+    position: absolute; z-index: 4; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #b7aaff 0%, #8b7cff 38%, #c04cff 100%);
+    box-shadow: 0 0 0 4px rgba(255,255,255,0.14), 0 0 34px 6px rgba(139,124,255,0.55);
+    cursor: crosshair; transform: translate(-50%, -50%) scale(1);
+    animation: spawn .13s cubic-bezier(.2,1.4,.4,1);
+  }
+  .target::after {
+    content: ""; position: absolute; inset: 26%; border-radius: 50%;
+    background: rgba(255,255,255,0.9); box-shadow: 0 0 12px 2px rgba(255,255,255,0.6);
+  }
+  .target.start { animation: spawn .2s cubic-bezier(.2,1.4,.4,1), breathe 1.6s ease-in-out .2s infinite; }
+  @keyframes spawn { from { transform: translate(-50%, -50%) scale(0.2); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+  @keyframes breathe { 0%,100% { transform: translate(-50%,-50%) scale(1); } 50% { transform: translate(-50%,-50%) scale(1.08); } }
+
+  /* centered messaging (start / done) */
+  .stage {
+    position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; text-align: center;
+    padding: 1.5rem; pointer-events: none;
+  }
+  .stage .inner { max-width: 640px; transform: translateY(-42px); }
+  .kicker { font: 600 0.72rem/1 var(--font-body); letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.7; }
+  h1 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; margin: 0.7rem 0 0.4rem; font-size: clamp(2rem, 7vw, 3.2rem); line-height: 1.05; }
+  .num { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(3rem, 13vw, 5.4rem); line-height: 1; letter-spacing: -0.03em; }
+  .num small { font-size: 0.28em; font-weight: 600; opacity: 0.75; margin-left: 0.15em; }
+  .msg { font-size: 1.05rem; opacity: 0.85; margin: 0.9rem 0 0; }
+  .sub-stats { display: flex; justify-content: center; gap: 1.6rem; margin-top: 1.2rem; flex-wrap: wrap; }
+  .sub-stats div { display: flex; flex-direction: column; gap: 0.2rem; }
+  .sub-stats .sk { font: 600 0.62rem/1 var(--font-body); letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
+  .sub-stats .sv { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; }
+  .best { position: fixed; bottom: 1.3rem; left: 0; right: 0; text-align: center; font: 500 0.9rem/1 var(--font-body); opacity: 0.6; pointer-events: none; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 1rem;
+    font: 700 0.8rem/1 var(--font-display); letter-spacing: 0.05em; text-transform: uppercase;
+    padding: 0.5rem 0.9rem; border-radius: 999px; color: #0c1a12;
+    background: linear-gradient(135deg, #7dffc4, #29d18f);
+    animation: pop .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="brand" href="../../"><span class="logo">🎯</span> Aim Trainer</a>
+  <div class="right">
+    <a class="chip" href="stats.html">📊 Stats</a>
+    <a class="chip" href="../../">← Arcade</a>
+  </div>
+</div>
+
+<div id="arena">
+  <div class="hud" id="hud">
+    <div class="stat"><span class="k">Target</span><span class="v" id="hudCount">0 / 30</span></div>
+    <div class="stat"><span class="k">Time</span><span class="v" id="hudTime">0.00</span></div>
+    <div class="stat"><span class="k">Accuracy</span><span class="v" id="hudAcc">100%</span></div>
+  </div>
+  <div class="stage" id="stage">
+    <div class="inner">
+      <div class="kicker">Aim Trainer</div>
+      <h1>Pop 30 targets, fast</h1>
+      <p class="msg">Click the glowing target to start. Then hit every target that appears — the clock is running.</p>
+    </div>
+  </div>
+</div>
+<div class="best" id="best"></div>
+
+<script type="module">
+  import { createStore } from "../../common/stats-store.js";
+
+  const TOTAL = 30;
+  const store = createStore("aim", { lowerIsBetter: true, unit: "ms" });
+
+  const arena = document.getElementById("arena");
+  const stage = document.getElementById("stage");
+  const hud = document.getElementById("hud");
+  const hudCount = document.getElementById("hudCount");
+  const hudTime = document.getElementById("hudTime");
+  const hudAcc = document.getElementById("hudAcc");
+  const bestEl = document.getElementById("best");
+
+  let state = "idle";        // idle | playing | done
+  let target = null;         // current target element
+  let hits = 0, misses = 0;
+  let startTime = 0, rafId = null;
+  let best = store.best();
+
+  function renderBest() {
+    bestEl.textContent = best != null ? `Personal best · ${best} ms / target` : "";
+  }
+  renderBest();
+
+  function targetSize() {
+    // responsive: smaller on small screens, but never tiny
+    return Math.max(44, Math.min(72, Math.round(window.innerWidth * 0.06)));
+  }
+
+  function spawn(isStart) {
+    if (target) target.remove();
+    const size = isStart ? 96 : targetSize();
+    const insets = { top: 112, bottom: 28, left: 24, right: 24 };
+    const w = arena.clientWidth, h = arena.clientHeight;
+    const minX = insets.left + size / 2, maxX = w - insets.right - size / 2;
+    const minY = insets.top + size / 2, maxY = h - insets.bottom - size / 2;
+    const el = document.createElement("div");
+    el.className = "target" + (isStart ? " start" : "");
+    el.style.width = el.style.height = size + "px";
+    if (isStart) {
+      el.style.left = "50%";
+      el.style.top = "72%";
+    } else {
+      el.style.left = (minX + Math.random() * Math.max(1, maxX - minX)) + "px";
+      el.style.top = (minY + Math.random() * Math.max(1, maxY - minY)) + "px";
+    }
+    arena.appendChild(el);
+    target = el;
+  }
+
+  function updateHud() {
+    hudCount.textContent = `${hits} / ${TOTAL}`;
+    const shots = hits + misses;
+    hudAcc.textContent = (shots ? Math.round((hits / shots) * 100) : 100) + "%";
+  }
+
+  function tick() {
+    hudTime.textContent = ((performance.now() - startTime) / 1000).toFixed(2);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function begin() {
+    state = "playing";
+    arena.className = "playing";
+    hits = 0; misses = 0;
+    startTime = performance.now();
+    stage.style.display = "none";
+    hud.classList.add("show");
+    updateHud();
+    tick();
+    spawn(false);
+  }
+
+  function finish() {
+    cancelAnimationFrame(rafId);
+    const totalMs = performance.now() - startTime;
+    const avg = totalMs / TOTAL;
+    const shots = hits + misses;
+    const acc = shots ? Math.round((hits / shots) * 100) : 100;
+
+    const record = store.isRecord(avg);
+    store.record(avg, { total: Math.round(totalMs), acc });
+    if (record) best = Math.round(avg);
+    renderBest();
+
+    state = "done";
+    arena.className = "done";
+    hud.classList.remove("show");
+    if (target) { target.remove(); target = null; }
+
+    stage.style.display = "grid";
+    stage.innerHTML = `
+      <div class="inner">
+        <div class="kicker">Average per target</div>
+        <div class="num">${Math.round(avg)}<small>ms</small></div>
+        ${record ? `<div class="badge">🏆 New personal best</div>` : ""}
+        <div class="sub-stats">
+          <div><span class="sk">Total time</span><span class="sv">${(totalMs / 1000).toFixed(2)}s</span></div>
+          <div><span class="sk">Accuracy</span><span class="sv">${acc}%</span></div>
+          <div><span class="sk">Misses</span><span class="sv">${misses}</span></div>
+        </div>
+        <p class="msg">Click anywhere to play again.</p>
+      </div>`;
+  }
+
+  function reset() {
+    state = "idle";
+    arena.className = "";
+    hud.classList.remove("show");
+    if (target) { target.remove(); target = null; }
+    stage.style.display = "grid";
+    stage.innerHTML = `
+      <div class="inner">
+        <div class="kicker">Aim Trainer</div>
+        <h1>Pop 30 targets, fast</h1>
+        <p class="msg">Click the glowing target to start. Then hit every target that appears — the clock is running.</p>
+      </div>`;
+    spawnStart();
+  }
+
+  function spawnStart() { spawn(true); }
+
+  function onHit() {
+    if (state === "idle") { begin(); return; }
+    if (state !== "playing") return;
+    hits++;
+    updateHud();
+    if (hits >= TOTAL) { finish(); return; }
+    spawn(false);
+  }
+
+  arena.addEventListener("pointerdown", (e) => {
+    const onTarget = target && e.target === target;
+    if (onTarget) { onHit(); return; }
+    if (state === "playing") { misses++; updateHud(); }
+    else if (state === "done") { reset(); }
+    // clicking empty space on the idle screen does nothing — you must hit the target
+  });
+
+  window.addEventListener("resize", () => { if (state === "idle") spawnStart(); });
+
+  // first paint
+  spawnStart();
+</script>
+</body>
+</html>

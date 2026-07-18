@@ -1,0 +1,9 @@
+{
+  "title": "Aim Trainer",
+  "description": "Pop 30 targets as fast as you can. Tracks your average time per target and accuracy.",
+  "entry": "index.html",
+  "author": "Timepass",
+  "icon": "🎯",
+  "tags": ["arcade", "solo", "reflex"],
+  "hidden": false
+}

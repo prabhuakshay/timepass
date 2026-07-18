@@ -1,5 +1,19 @@
 [
   {
+    "id": "aim",
+    "title": "Aim Trainer",
+    "description": "Pop 30 targets as fast as you can. Tracks your average time per target and accuracy.",
+    "author": "Timepass",
+    "icon": "🎯",
+    "tags": [
+      "arcade",
+      "solo",
+      "reflex"
+    ],
+    "hidden": false,
+    "path": "games/aim/"
+  },
+  {
     "id": "reaction",
     "title": "Reaction Test",
     "description": "Wait for green, then tap as fast as you can. Tracks your reaction time and records.",
