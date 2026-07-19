@@ -431,5 +431,23 @@
   idleScreen();
   requestAnimationFrame(loop);
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "Snake",
+    emoji: "🐍",
+    tagline: "The classic — eat, grow, survive.",
+    rules: [
+      "Steer the snake to eat the food and grow longer.",
+      "Each bite scores a point and the snake speeds up a little.",
+      "Don't hit the walls or your own tail.",
+    ],
+    controls: [
+      ["Arrow keys / WASD", "Steer"],
+      ["Space", "Pause"],
+      ["Enter", "Restart after game over"],
+    ],
+  });
+</script>
 </body>
 </html>

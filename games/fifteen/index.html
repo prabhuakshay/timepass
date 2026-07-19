@@ -369,5 +369,23 @@
   build();
   newGame();
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "15 Puzzle",
+    emoji: "🧩",
+    tagline: "Slide the tiles into order, 1 to 15.",
+    rules: [
+      "Slide tiles into the empty space to rearrange the board.",
+      "Put the numbers in order, 1 through 15, with the blank last.",
+      "The timer starts on your first move.",
+      "Your fastest solve is saved (lower time is better).",
+    ],
+    controls: [
+      ["Click / Tap a tile", "Slide it toward the gap"],
+      ["Arrow keys", "Slide a tile into the gap"],
+    ],
+  });
+</script>
 </body>
 </html>

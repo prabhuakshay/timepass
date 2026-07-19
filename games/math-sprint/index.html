@@ -309,5 +309,23 @@
     if (state === "idle" || state === "done") { e.preventDefault(); begin(); }
   });
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "Mental Math Sprint",
+    emoji: "➗",
+    tagline: "As many problems as you can in 60 seconds.",
+    rules: [
+      "Solve each arithmetic problem shown (＋ − × ÷).",
+      "Type the answer — a correct one loads the next instantly.",
+      "Keep going until the 60-second timer runs out.",
+      "Score is the number of problems solved; higher is better.",
+    ],
+    controls: [
+      ["Type", "Answer (auto-advances when correct)"],
+      ["Enter", "Submit"],
+    ],
+  });
+</script>
 </body>
 </html>

@@ -149,5 +149,23 @@
     }
   });
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "Reaction Test",
+    emoji: "⚡",
+    tagline: "A pure test of reflexes — how fast can you react?",
+    rules: [
+      "Wait for the screen to turn green.",
+      "The instant it does, click, tap, or press Space.",
+      "Click before green and it's a false start — hold your nerve.",
+      "Your time shows in milliseconds; lower is better.",
+    ],
+    controls: [
+      ["Click / Tap", "Start & react"],
+      ["Space", "React"],
+    ],
+  });
+</script>
 </body>
 </html>

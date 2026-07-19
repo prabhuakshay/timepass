@@ -381,5 +381,23 @@
 
   newGame();
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "2048",
+    emoji: "🔟",
+    tagline: "Merge matching tiles to reach 2048.",
+    rules: [
+      "Slide all tiles one direction; equal tiles that collide merge into their sum.",
+      "Every move spawns a new 2 or 4 on an empty cell.",
+      "Reach the 2048 tile — then keep going to run up your score.",
+      "The game ends when the board is full with no moves left.",
+    ],
+    controls: [
+      ["Arrow keys / WASD", "Slide tiles"],
+      ["Swipe", "Slide (touch)"],
+    ],
+  });
+</script>
 </body>
 </html>

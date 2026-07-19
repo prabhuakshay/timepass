@@ -401,5 +401,24 @@
   buildKeyboard();
   newGame();
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "Word Guess",
+    emoji: "🟩",
+    tagline: "Guess the hidden five-letter word in six tries.",
+    rules: [
+      "Type any valid five-letter word and submit it.",
+      "Green means the letter is correct and in the right spot.",
+      "Yellow means the letter is in the word but a different spot.",
+      "Gray means the letter isn't in the word. Crack it within six guesses.",
+    ],
+    controls: [
+      ["Type", "Fill the row"],
+      ["Enter", "Submit a guess"],
+      ["Backspace", "Delete a letter"],
+    ],
+  });
+</script>
 </body>
 </html>

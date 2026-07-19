@@ -249,5 +249,23 @@
 
   showIntro();
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "Number Memory",
+    emoji: "🔢",
+    tagline: "How many digits can you hold in your head?",
+    rules: [
+      "A number flashes on screen — memorize it before it vanishes.",
+      "When it disappears, type it back exactly.",
+      "Each round the number grows by one more digit.",
+      "One wrong answer ends the game; your score is the longest number you recalled.",
+    ],
+    controls: [
+      ["Type", "Enter the number"],
+      ["Enter", "Submit your answer"],
+    ],
+  });
+</script>
 </body>
 </html>

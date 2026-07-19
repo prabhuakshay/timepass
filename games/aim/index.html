@@ -272,5 +272,22 @@
   // first paint
   spawnStart();
 </script>
+<script type="module">
+  import { mountHelp } from "../../common/how-to.js";
+  mountHelp({
+    title: "Aim Trainer",
+    emoji: "🎯",
+    tagline: "Pop 30 targets as fast as you can.",
+    rules: [
+      "Click the glowing target to start the clock.",
+      "Hit each new target as quickly as it appears.",
+      "The round runs until you've popped all 30 targets.",
+      "Score is your average time per target (lower is better); accuracy is tracked too.",
+    ],
+    controls: [
+      ["Click / Tap", "Pop targets"],
+    ],
+  });
+</script>
 </body>
 </html>

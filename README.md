@@ -96,6 +96,24 @@ line and hover tooltips), a history table, and a "clear data" button — all sty
 to match the site. Link to it from your game (see `games/reaction/` for the full
 example). Chart colors are validated colorblind-safe.
 
+### A "How to play" overlay — `common/how-to.js`
+
+Give players the rules without cluttering the screen. One call adds a "How to
+play" button and a modal describing the game and its controls:
+
+```js
+import { mountHelp } from "../../common/how-to.js";
+mountHelp({
+  title: "My Game", emoji: "🎯",
+  tagline: "One-line hook.",
+  rules: ["Do this.", "Then that.", "Beat your best."],
+  controls: [["Arrow keys", "Move"], ["Space", "Action"]],
+});
+```
+
+It's self-contained (injects its own styles), and while the modal is open it
+swallows keystrokes and pointer events so they don't drive the game underneath.
+
 ### Consistent look — `common/ui.css`
 
 Link it and use its classes (`.container`, `.card`, `.tile`, `.panel`, `.btn`,
